@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Experimento Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 300px;
+      padding: 10px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h3>Selecione o tipo de experimento</h3>
+  <select id="experimentType">
+    <option value="2">Personalização</option>
+    <option value="1">Teste A/B</option>
+  </select>
+
+  <div id="tokenDiv">
+    <h4>Insira o token do experimento:</h4>
+    <input type="text" id="tokenInput" placeholder="Token do experimento">
+  </div>
+
+  <div id="variantDiv" class="hidden">
+    <h4>Selecione a variante:</h4>
+    <select id="variantSelect">
+      <option value="0">Controller</option>
+      <option value="1" selected>Variant 1</option>
+      <option value="2">Variant 2</option>
+      <option value="3">Variant 3</option>
+      <option value="4">Variant 4</option>
+    </select>
+  </div>
+  <br>
+  <button id="saveButton">Salvar</button>
+  <button id="clearButton">Limpar</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
