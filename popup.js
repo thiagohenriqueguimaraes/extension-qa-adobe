@@ -5,20 +5,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearButton = document.getElementById('clearButton');
     const tokenInput = document.getElementById('tokenInput');
     const variantSelect = document.getElementById('variantSelect');
-    const currentQA = document.getElementById('currentQA');
-
-   
+    const url = 'https://www.santander.com.br/'
   
-    chrome.cookies.get({"url": window.location.hostname, "name": 'at_qa_mode'}, (cookie) => {
-      currentQA.innerText = cookie?.value;
-    });
+    //const url = 'https://www.santander.com.br/'
+    function toogleClarButton() {
+      chrome.cookies.get({"url": url, "name": 'at_qa_mode'}, (cookie) => {
+        clearButton.classList[cookie?'remove':'add']('hidden')
+      });
+    }
+    toogleClarButton()
     // Mostra ou esconde as opções de variante com base no tipo de experimento selecionado
     experimentType.addEventListener('change', function() {
-      if (experimentType.value === '1') {
-        variantDiv.classList.remove('hidden');
-      } else {
-        variantDiv.classList.add('hidden');
-      }
+      const typeIsTestAb = experimentType.value === '1'
+      variantDiv.classList[typeIsTestAb?'remove':'add']('hidden');
     });
   
     // Função para salvar no cookie
@@ -31,26 +30,40 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       chrome.cookies.set({
-        url: window.location.hostname, 
+        url: url, 
         name: 'at_qa_mode',
         value: JSON.stringify({
             token: token,
-            listedActivitiesOnly: 'false',
+            listedActivitiesOnly: 'true',
             previewIndexes: [{ type, variant }]
         }),
-        expirationDate: Math.floor(Date.now() / 1000) + 3600 // expira em 1 hora
+        expirationDate: Math.floor(Date.now() / 1000) + 3600
       });
-  
+      toogleClarButton()
+
+      alloy('sendEvent', {
+        renderDecisions: true, // Renderize as decisões automaticamente
+        decisionScopes: ['__view__'], // Ajuste para o escopo correto da sua página
+        xdm: {
+          web: {
+            webPageDetails: {
+              URL: `https://www.santander.com.br/?at_preview_token=${token}&at_preview_index=${type}_${variant}&at_preview_listed_activities_only=true`
+            }}}
+      }).then(function(response) {
+        console.log('Atividade de preview carregada com sucesso:', response);
+      }).catch(function(error) {
+        console.error('Erro ao carregar a atividade de preview:', error);
+      });
       alert('Informações salvas no cookie!');
     });
   
     // Função para limpar o cookie
     clearButton.addEventListener('click', function() {
       chrome.cookies.remove({
-        url: window.location.hostname, // Altere para o site correto
+        url: url, 
         name: 'at_qa_mode'
       });
-  
+      toogleClarButton()
       alert('Informações limpas do cookie!');
     });
   });
