@@ -5,13 +5,6 @@
   "description": "Gerencie seu tipo de experimento e salve informações no cookie",
   "permissions": ["cookies", "storage", "tabs", "activeTab", "scripting"],
   "host_permissions": ["*://*/*"],
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content_script.js"],
-      "run_at": "document_end"
-    }
-  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

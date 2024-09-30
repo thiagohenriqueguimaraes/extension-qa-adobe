@@ -7,20 +7,28 @@ document.addEventListener('DOMContentLoaded', function() {
   const variantSelect = document.getElementById('variantSelect');
   const url = 'https://www.santander.com.br/';
 
-  function toogleClearButton() {
+  function toggleClearButton() {
     chrome.cookies.get({ "url": url, "name": 'at_qa_mode' }, (cookie) => {
-      clearButton.classList[cookie ? 'remove' : 'add']('hidden');
+      if (cookie) {
+        clearButton.classList.remove('hidden');
+      } else {
+        clearButton.classList.add('hidden');
+      }
     });
   }
-  toogleClearButton();
+  toggleClearButton();
 
   // Mostra ou esconde as opções de variante com base no tipo de experimento selecionado
   experimentType.addEventListener('change', function() {
     const typeIsTestAb = experimentType.value === '1';
-    variantDiv.classList[typeIsTestAb ? 'remove' : 'add']('hidden');
+    if (typeIsTestAb) {
+      variantDiv.classList.remove('hidden');
+    } else {
+      variantDiv.classList.add('hidden');
+    }
   });
 
-  // Função para salvar no cookie e enviar mensagem ao content script
+  // Função para salvar no cookie e injetar o script na página
   saveButton.addEventListener('click', function() {
     const token = tokenInput.value;
     const type = experimentType.value;
@@ -40,28 +48,26 @@ document.addEventListener('DOMContentLoaded', function() {
       }),
       expirationDate: Math.floor(Date.now() / 1000) + 3600
     });
-    toogleClearButton();
+    toggleClearButton();
 
-    // Enviar mensagem ao content script
+    // Injetar o script no contexto principal da página
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        action: 'executeAlloySendEvent',
-        data: {
-          token: token,
-          type: type,
-          variant: variant
-        }
-      }, function(response) {
-        if (chrome.runtime.lastError) {
-          console.log('Mensagem enviada ao content script:', {
-            action: 'executeAlloySendEvent',
-            data: { token, type, variant }
-          });
-          console.error('Erro ao enviar mensagem ao content script:', chrome.runtime.lastError);
-        } else {
-          console.log('Resposta do content script:', response);
-        }
-      });
+      if (tabs[0]) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          world: 'MAIN', // Executar no contexto principal da página
+          func: executeAlloySendEvent,
+          args: [token, type, variant]
+        }, (results) => {
+          if (chrome.runtime.lastError) {
+            console.error('Erro ao injetar o script:', chrome.runtime.lastError);
+          } else {
+            console.log('Script injetado com sucesso:', results);
+          }
+        });
+      } else {
+        console.error('Nenhuma aba ativa encontrada.');
+      }
     });
 
     alert('Informações salvas no cookie!');
@@ -73,7 +79,53 @@ document.addEventListener('DOMContentLoaded', function() {
       url: url,
       name: 'at_qa_mode'
     });
-    toogleClearButton();
+    toggleClearButton();
     alert('Informações limpas do cookie!');
   });
+
+  // Função a ser injetada na página
+  function executeAlloySendEvent(token, type, variant) {
+    (function() {
+      function waitForAlloy(callback) {
+        var maxAttempts = 50;
+        var attempts = 0;
+        var checkAlloy = setInterval(function() {
+          if (typeof alloy !== 'undefined') {
+            clearInterval(checkAlloy);
+            callback();
+          } else {
+            attempts++;
+            if (attempts >= maxAttempts) {
+              clearInterval(checkAlloy);
+              console.error('Timeout: alloy não foi definido após esperar 5 segundos.');
+            }
+          }
+        }, 100);
+      }
+
+      waitForAlloy(function() {
+        console.log('Executando alloy("sendEvent") com os parâmetros:');
+        console.log('Token:', token);
+        console.log('Type:', type);
+        console.log('Variant:', variant);
+
+        alloy('sendEvent', {
+          renderDecisions: true,
+          decisionScopes: ['__view__'],
+          xdm: {
+            web: {
+              webPageDetails: {
+                URL: 'https://www.santander.com.br/?at_preview_token=' + token + '&at_preview_index=' + type + '_' + variant + '&at_preview_listed_activities_only=true'
+              }
+            }
+          }
+        }).then(function(response) {
+          console.log('Atividade de preview carregada com sucesso:', response);
+        }).catch(function(error) {
+          console.error('Erro ao carregar a atividade de preview:', error);
+        });
+      });
+    })();
+  }
 });
+

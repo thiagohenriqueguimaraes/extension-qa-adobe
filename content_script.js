@@ -1,15 +1,17 @@
-console.log('content_script.js carregado.');
+
   
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+
   console.log('Mensagem recebida no content script:', request);
 
   if (request.action === 'executeAlloySendEvent') {
+    console.log('content_script.js carregado.');
     const { token, type, variant } = request.data;
 
     // Injetar o script na página
     injectScript(token, type, variant);
 
-    sendResponse({ status: 'Script injetado na página' });
+    sendResponse({ status: 'Script injetado na página2' });
   }
   return true;
 });
