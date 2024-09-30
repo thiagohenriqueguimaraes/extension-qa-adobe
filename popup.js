@@ -5,10 +5,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearButton = document.getElementById('clearButton');
     const tokenInput = document.getElementById('tokenInput');
     const variantSelect = document.getElementById('variantSelect');
+    const currentQA = document.getElementById('currentQA');
+
+   
   
+    chrome.cookies.get({"url": window.location.hostname, "name": 'at_qa_mode'}, (cookie) => {
+      currentQA.innerText = cookie?.value;
+    });
     // Mostra ou esconde as opções de variante com base no tipo de experimento selecionado
     experimentType.addEventListener('change', function() {
-      if (experimentType.value === 'testeab') {
+      if (experimentType.value === '1') {
         variantDiv.classList.remove('hidden');
       } else {
         variantDiv.classList.add('hidden');
@@ -20,13 +26,12 @@ document.addEventListener('DOMContentLoaded', function() {
       const token = tokenInput.value;
       const type = experimentType.value;
       let variant = 1;
-      console.log('experimentType.value: ', type)
       if (type == '1') {
         variant = variantSelect.value;
       }
       
       chrome.cookies.set({
-        url: window.location.hostname, // Altere para o site correto
+        url: window.location.hostname, 
         name: 'at_qa_mode',
         value: JSON.stringify({
             token: token,
