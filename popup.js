@@ -5,9 +5,22 @@ document.addEventListener('DOMContentLoaded', function() {
   const clearButton = document.getElementById('clearButton');
   const tokenInput = document.getElementById('tokenInput');
   const variantSelect = document.getElementById('variantSelect');
-  const url = 'https://www.santander.com.br/';
+  let url = '';
+
+  // Obtém a URL da aba ativa
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    if (tabs.length > 0) {
+      console.log('tabs[0].url', tabs[0].url)
+      url = tabs[0].url;
+    } else {
+      console.error('Nenhuma aba ativa encontrada.');
+    }
+    toggleClearButton();
+  });
 
   function toggleClearButton() {
+    if (!url) return;
+
     chrome.cookies.get({ "url": url, "name": 'at_qa_mode' }, (cookie) => {
       if (cookie) {
         clearButton.classList.remove('hidden');
@@ -16,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
-  toggleClearButton();
 
   // Mostra ou esconde as opções de variante com base no tipo de experimento selecionado
   experimentType.addEventListener('change', function() {
@@ -57,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
           target: { tabId: tabs[0].id },
           world: 'MAIN', // Executar no contexto principal da página
           func: executeAlloySendEvent,
-          args: [token, type, variant]
+          args: [token, type, variant, tabs[0].url]
         }, (results) => {
           if (chrome.runtime.lastError) {
             console.error('Erro ao injetar o script:', chrome.runtime.lastError);
@@ -84,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Função a ser injetada na página
-  function executeAlloySendEvent(token, type, variant) {
+  function executeAlloySendEvent(token, type, variant, url) {
     (function() {
       function waitForAlloy(callback) {
         var maxAttempts = 50;
@@ -115,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
           xdm: {
             web: {
               webPageDetails: {
-                URL: 'https://www.santander.com.br/?at_preview_token=' + token + '&at_preview_index=' + type + '_' + variant + '&at_preview_listed_activities_only=true'
+                URL: url + '?at_preview_token=' + token + '&at_preview_index=' + type + '_' + variant + '&at_preview_listed_activities_only=true'
               }
             }
           }
@@ -128,4 +140,3 @@ document.addEventListener('DOMContentLoaded', function() {
     })();
   }
 });
-
