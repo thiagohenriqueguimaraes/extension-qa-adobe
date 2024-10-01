@@ -2,6 +2,8 @@
 
 Esta extensão do Chrome foi criada para facilitar o gerenciamento de experimentos no Adobe Target para o ambiente de QA do Santander. Através da interface, é possível selecionar o tipo de experimento, inserir o token do experimento e, no caso de testes A/B, escolher uma variante específica. A extensão permite salvar essas informações no cookie e também limpar os cookies relacionados ao experimento.
 
+![My Image](image.png)
+
 ## Funcionalidades
 
 - **Seleção do tipo de experimento**: O usuário pode escolher entre "Teste A/B" ou "Personalização".
